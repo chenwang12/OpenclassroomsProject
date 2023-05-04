@@ -6,26 +6,57 @@ import pandas as pd
 
 
 class PriceMonitoringTool(object):
-     def __init__(self) -> None:
+     def __init__(self, book_name):
           self.link = 'http://books.toscrape.com/'
           self.response = requests.get(self.link)
+          self.soup = BeautifulSoup(self.response.content, 'html.parser')
+          self.book_name = book_name
 
      def run(self):
           self.connCheck(self.response)
+          cat_url = self.getCategoryURL(self, self.soup)
+          self.parseCategory(self,self.soup,cat_url)
           product_url = self.findProdPage(self,self.response,book_name)
           book_info = self.getInfo(self,product_url)
           self.expCSV(self,product_url,book_info)
           
      def connCheck(self,url):
             if url.status_code != 200:
-                print("Error fetching the bok page")
-                sys.exit(1)
+                print("Error fetching the book page")
+                sys.exit()
+ 
+     def getCategoryURL(self,soup,category=None):
+          """
+          Function that extracts catergory  
+          """
+          # get the URL of the category page 
+          soup.select_one('.nav-list > li > ul > li').get_text().strip()
+          for item in soup.select('.nav-list > li > ul > li'):
+               itemText = item.get_text().strip()
+               if itemText == category or category == None:
+                    cat_url = item.a.get('href')
+          return cat_url
+
+     def parseCategory(self,soup,cat_url):
+          """
+          Function that checks all pages for a given catergory and generates category URL for all pages.  
+          """
+          products = []
+          catlink = f"{soup}{cat_url}"
+          catInfo = requests.get(catlink)
+          catSoup = BeautifulSoup(catInfo.content, 'html.parser')
+          hasMore = catSoup.select_one('.next')
+          if hasMore:
+               nextUrl = hasMore.a.get('href')
+               cat_url = "/".join(cat_url.split("/")[0:-1]) + "/" + nextUrl
+               products.extend(self.parseCategory(soup,cat_url))
+          return products
      
-     def findProdPage(self,weblink,book_name):
+
+     def findProdPage(self,soup,book_name):
         """
         Function that will check if books is available on the webpage and retrives book's product page url, 
         """
-        soup = BeautifulSoup(weblink.content, 'html.parser')
         # get the URL of the product page 
         if soup.find("a", {"title": book_name}):
           target_link = soup.find("a", {"title": book_name})
@@ -69,12 +100,13 @@ class PriceMonitoringTool(object):
           final_df.to_csv('book_info.csv')
 
 if __name__ == "__main__":
-     book_name = sys.argv[1]
      if len(sys.argv) != 2:
           print("You must provide book name")
           sys.exit(1)
-     else:
-          mornitoringTool = PriceMonitoringTool(object)
-          mornitoringTool.run()
+     
+     book_name = sys.argv[1]
+     
+     mornitoringTool = PriceMonitoringTool(book_name)
+     mornitoringTool.run()
           
 
