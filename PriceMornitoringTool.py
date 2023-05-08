@@ -20,11 +20,12 @@ class PriceMonitoringTool(object):
           #self.book_name = book_name
           self.connCheck(response)
           soup = BeautifulSoup(response.content, 'html.parser')
-          cat_url = self.getCategoryURL(soup)
+          cat_url = self.getCategoryURL(self.link,soup)
           self.parseCategory(self.link,cat_url)
           product_url = self.findProdPage(self.link,soup,book_name)
           book_info = self.getInfo(self.link,product_url)
-          self.expCSV(self.link,product_url,book_info)
+          data_df = self.expCSV(self.link,product_url,book_info)
+          self.downloadImg(data_df,self.img_folder)
           
      def connCheck(self,url):
             """
@@ -32,35 +33,7 @@ class PriceMonitoringTool(object):
             """
             if url.status_code != 200:
                 print("Error fetching the book page")
-                sys.exit()
- 
-     def getCategoryURL(self,soup,category=None):
-          """
-          Function that extracts category URL for a given category or all categories in this website
-          """
-          # get the URL of the category page 
-          cat_url_list = []
-          # get the URL of the product page 
-          soup.select_one('.nav-list > li > ul > li').get_text().strip()
-          #print(target_cat)
-          for item in soup.select('.nav-list > li > ul > li'):
-               #print(item)
-               itemText = item.get_text().strip()
-               if itemText == category or category == None:
-                    cat_url = item.a.get('href')
-                    cat_url_list.append(cat_url)            
-                    #print(cat_url_list)
-          return cat_url_list
-                  
-          # cat_url = getCategoryURL(soup)
-          # total = 0
-          # for curl in cat_url:                                     ##### Parts need to be tested
-          # pageUrl = weblink + curl
-          # next_page = requests.get(pageUrl)
-          # next_soup = BeautifulSoup(next_page.content, 'html.parser')
-          # results = findProdPage(weblink, next_soup)
-          # total += len(results)
-          # print(total)
+                sys.exit()  
 
      # def parseCategory(self,link,cat_url):
      #      """
@@ -114,8 +87,30 @@ class PriceMonitoringTool(object):
                next_soup = BeautifulSoup(next_page.content, 'html.parser')
                product_url.extend(self.findProdPage(pageUrl,next_soup, book_name))
         return product_url
+     
+     def getCategoryURL(self,weblink,soup,category=None):
+          """
+          Function that extracts category URL for a given category or all categories in this website
+          """
+          # get the URL of the category page 
+          cat_url_list = []
+          # get the URL of the product page 
+          soup.select_one('.nav-list > li > ul > li').get_text().strip()
+          #print(target_cat)
+          for item in soup.select('.nav-list > li > ul > li'):
+               #print(item)
+               itemText = item.get_text().strip()
+               if itemText == category or category == None:
+                    cat_url = item.a.get('href')
+                    cat_url_list.append(cat_url)                            
+          for curl in cat_url_list:                                    
+               pageUrl = weblink + curl
+               next_page = requests.get(pageUrl)
+               next_soup = BeautifulSoup(next_page.content, 'html.parser')
+               results = self.findProdPage(pageUrl, next_soup)
+          return results
 
-     def getInfo(self,link,product_url): 
+     def getInfo(self,weblink,product_url): 
         """
            Get book product info, including:
            upc,book_title ,price_including_tax,price_excluding_tax,quantity_available,product_description,category,review_rating,image_url
@@ -137,13 +132,12 @@ class PriceMonitoringTool(object):
                 product_description = product_soup.select_one('.product_page > p').get_text()
                 review_rating = product_soup.select_one('.star-rating')['class'][1]
                 image_url = 'http://books.toscrape.com' + product_soup.find('img')['src'][5:]
-                #print(upc, book_title, price_excluding_tax, price_including_tax, quantity_available, product_description, category, review_rating, image_url)
                 productsInfo.append((category, upc, book_title, price_excluding_tax, price_including_tax, quantity_available, product_description, review_rating, image_url))
         return productsInfo
 
      def expCSV(self,link,product_url,book_info):
           """
-          export book info into CSV file
+          Export books' information of each category into a seperated csv file
           """
           prod_url = [link + purl for purl in product_url]
           df1 = pd.DataFrame({'product_page_url': prod_url})
@@ -153,23 +147,23 @@ class PriceMonitoringTool(object):
           categories = set(final_df['Category'])
           for cat in categories:
                cat_df = final_df[final_df['Category']==cat] 
-               cat_df.to_csv(f"{cat}.csv")     
+               cat_df.to_csv(f"{cat}.csv")  
+          return final_df   
 
-     def downloadImg(url,final_df,img_folder):
+     def downloadImg(self,data_df,img_folder):
           """
           Function that download book cover images and save to the folder. Default folder is Desktop/web_book_img
           """
-          img_data = requests.get(url).content
+          # make a folder for saving images
           if os.path.exists(img_folder):
-                    shutil.rmtree(img_folder)
-                    os.makedirs(img_folder)                
+               shutil.rmtree(img_folder)
+               os.makedirs(img_folder)                     
           else: 
-                    os.makedirs(img_folder)
-          final_df['']
-          #for i, image in enumerate(images):
-               #with open(f"{image_folder}/images{i+1}.jpg", 'wb') as handler:
-          with open(f"{img_folder}/images{1}.jpg", 'wb') as handler:
-                         handler.write(img_data)
+               os.makedirs(img_folder)
+          for i, image in enumerate(data_df['Image_url']):    
+               img_data = requests.get(image).content
+               with open(f"{img_folder}/images{i}.jpg", 'wb') as handler:
+                    handler.write(img_data)
 
 if __name__ == "__main__":
      if len(sys.argv) != 2:
