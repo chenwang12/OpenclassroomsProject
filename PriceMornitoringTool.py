@@ -88,27 +88,31 @@ class PriceMonitoringTool(object):
                product_url.extend(self.findProdPage(pageUrl,next_soup, book_name))
         return product_url
      
-     def getCategoryURL(self,weblink,soup,category=None):
+     def getCategoryURL(self,link,soup,category=None):
           """
           Function that extracts category URL for a given category or all categories in this website
           """
-          # get the URL of the category page 
-          cat_url_list = []
-          # get the URL of the product page 
-          soup.select_one('.nav-list > li > ul > li').get_text().strip()
-          #print(target_cat)
-          for item in soup.select('.nav-list > li > ul > li'):
-               #print(item)
-               itemText = item.get_text().strip()
-               if itemText == category or category == None:
-                    cat_url = item.a.get('href')
-                    cat_url_list.append(cat_url)                            
-          for curl in cat_url_list:                                    
-               pageUrl = weblink + curl
-               next_page = requests.get(pageUrl)
-               next_soup = BeautifulSoup(next_page.content, 'html.parser')
-               results = self.findProdPage(pageUrl, next_soup)
-          return results
+          if category == None:
+               product_url = self.findProdPage(link,soup)
+               return product_url
+          else:
+               # get the URL of the category page 
+               cat_url_list = []
+               # get the URL of the product page 
+               soup.select_one('.nav-list > li > ul > li').get_text().strip()
+               #print(target_cat)
+               for item in soup.select('.nav-list > li > ul > li'):
+                    #print(item)
+                    itemText = item.get_text().strip()
+                    if itemText == category or category == None:
+                         cat_url = item.a.get('href')
+                         cat_url_list.append(cat_url)                            
+               for curl in cat_url_list:                                    
+                    pageUrl = weblink + curl
+                    next_page = requests.get(pageUrl)
+                    next_soup = BeautifulSoup(next_page.content, 'html.parser')
+                    results = self.findProdPage(pageUrl, next_soup)
+               return results
 
      def getInfo(self,weblink,product_url): 
         """
