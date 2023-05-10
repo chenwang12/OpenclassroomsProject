@@ -1,65 +1,56 @@
 import sys, os, shutil
 import string
-from datetime import datetime
+import argparse
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 
 
 class PriceMonitoringTool(object):
-     def __init__(self, book_name):
+     def __init__(self):
           self.link = 'http://books.toscrape.com/'
-          #self.response = requests.get(self.link)
-          #self.soup = BeautifulSoup(self.response.content, 'html.parser')
-          #self.book_name = book_name
-          self.img_folder = os.path.join(os.environ['USERPROFILE'], 'Desktop') 
           self.img_folder = os.path.join(os.path.join(os.environ['USERPROFILE'], 'Desktop'),'web_book_img')
+          self.output_folder = os.path.join(os.path.join(os.environ['USERPROFILE'], 'Desktop'),'web_book_scrapping')
 
-     def run(self, book_name=None):
+
+     def run(self, book_name=None, category=None):
           response = requests.get(self.link)
-          #self.book_name = book_name
           self.connCheck(response)
-          soup = BeautifulSoup(response.content, 'html.parser')
-          cat_url = self.getCategoryURL(self.link,soup)
-          self.parseCategory(self.link,cat_url)
-          product_url = self.findProdPage(self.link,soup,book_name)
-          book_info = self.getInfo(self.link,product_url)
-          data_df = self.expCSV(self.link,product_url,book_info)
-          self.downloadImg(data_df,self.img_folder)
-          
-     def connCheck(self,url):
+          soup = self.getSoup(link=self.link)
+          product_url = self.findProdPage(soup, book_name)
+          cat_url = self.getCategoryURL(soup, category)
+          book_info = self.getInfo(self.link, cat_url)
+          data_df = self.expCSV(self.link, product_url, book_info, self.output_folder)
+          self.downloadImg(data_df, self.img_folder)
+               
+     def connCheck(self,response):
             """
             Function that checks if the network connection is OK
             """
-            if url.status_code != 200:
+            if response.status_code != 200:
                 print("Error fetching the book page")
                 sys.exit()  
 
-     # def parseCategory(self,link,cat_url):
-     #      """
-     #      Function that generates category URL for all pages.  
-     #      """
-     #      catlink = f"{link}{cat_url}"
-     #      products = [catlink]
-     #      catInfo = requests.get(catlink)
-     #      catSoup = BeautifulSoup(catInfo.content, 'html.parser')
-     #      hasMore = catSoup.select_one('.next')
-     #      if hasMore:
-     #            nextUrl = hasMore.a.get('href')
-     #            catUrl = "/".join(cat_url.split("/")[0:-1]) + "/" + nextUrl
-     #            products.extend(self.parseCategory(link, catUrl))
-     #      return products
+     def getSoup(self,link):
+          """
+          Function that creates soup object for a given URL
+          return: soup object
+          """
+          books = requests.get(link)
+          soup = BeautifulSoup(books.content, 'html.parser')
+          return soup
 
      def findProdPage(self,link,soup,book_name=None):
         """
-        Function that will retrive a book's product page url if book name is specified,
+        Function that will retrive a book's product page url if book's name is specified,
         or will retrive all books' product page url 
+        return: a list contains books' urls      
         """
         product_url = []
         hasMore = soup.select_one('.next')
         # get the URL of the product page 
         if book_name == None:
-               product_urls = soup.find_all('a',href = True, title=True)
+               product_urls = soup.find_all('a',href = True,title=True)
                # find href attributes of each book product
                for target_link in product_urls:
                     url = target_link["href"]
@@ -108,13 +99,13 @@ class PriceMonitoringTool(object):
                          cat_url = item.a.get('href')
                          cat_url_list.append(cat_url)                            
                for curl in cat_url_list:                                    
-                    pageUrl = weblink + curl
+                    pageUrl = link + curl
                     next_page = requests.get(pageUrl)
                     next_soup = BeautifulSoup(next_page.content, 'html.parser')
                     results = self.findProdPage(pageUrl, next_soup)
                return results
 
-     def getInfo(self,weblink,product_url): 
+     def getInfo(self,link,product_url): 
         """
            Get book product info, including:
            upc,book_title ,price_including_tax,price_excluding_tax,quantity_available,product_description,category,review_rating,image_url
@@ -122,7 +113,7 @@ class PriceMonitoringTool(object):
         productsInfo = []
         for product in product_url:
                 # make a GET request to the product page
-                product_page_response = requests.get(weblink + product)
+                product_page_response = requests.get(link + product)
                 # create a BeautifulSoup object to parse the HTML content of the product page
                 product_soup = BeautifulSoup(product_page_response.content, 'html.parser')
 
@@ -139,7 +130,7 @@ class PriceMonitoringTool(object):
                 productsInfo.append((category, upc, book_title, price_excluding_tax, price_including_tax, quantity_available, product_description, review_rating, image_url))
         return productsInfo
 
-     def expCSV(self,link,product_url,book_info):
+     def expCSV(self,link,product_url,book_info,output_folder):
           """
           Export books' information of each category into a seperated csv file
           """
@@ -149,9 +140,16 @@ class PriceMonitoringTool(object):
                               'Product_Description','Review_Rating','Image_url'])
           final_df = pd.concat([df1, df2], axis=1)
           categories = set(final_df['Category'])
+          # create folder for saving output
+          if os.path.exists(output_folder):
+               shutil.rmtree(output_folder)
+               os.makedirs(output_folder)                     
+          else: 
+               os.makedirs(output_folder)
+          # save each category into a sperated csv file
           for cat in categories:
                cat_df = final_df[final_df['Category']==cat] 
-               cat_df.to_csv(f"{cat}.csv")  
+               cat_df.to_csv(f"{output_folder}/{cat}.csv")  
           return final_df   
 
      def downloadImg(self,data_df,img_folder):
@@ -170,13 +168,16 @@ class PriceMonitoringTool(object):
                     handler.write(img_data)
 
 if __name__ == "__main__":
-     if len(sys.argv) != 2:
-          print("You must provide a book name")
-          sys.exit(1)
+     parser = argparse.ArgumentParser(description='This is a program to extract online book information')
+     # Add arguments for system parameters
+     parser.add_argument('--b', type=str, help="Book's name")
+     parser.add_argument('--c', type=str, help="Category's name")
+     args = parser.parse_args()
+     # Access and use the system parameters
+     book_name = args.b
+     category = args.c
      
-     book_name = sys.argv[1]
-     
-     mornitoringTool = PriceMonitoringTool(book_name)
-     mornitoringTool.run()
+     mornitoringTool = PriceMonitoringTool()
+     mornitoringTool.run(book_name,category)
           
 
