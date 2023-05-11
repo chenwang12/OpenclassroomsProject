@@ -140,7 +140,8 @@ class PriceMonitoringTool(object):
           df2 = pd.DataFrame(book_info,columns=['Category', 'UPC', 'Book_Title', 'Price_Including_Tax', 'Price_Excluding_Tax', 'Quantity_Available',
                               'Product_Description','Review_Rating','Image_url'])
           final_df = pd.concat([df1, df2], axis=1)
-          categories = set(final_df['Category'])
+          dfresult = final_df.dropna()  # drop rows which category are nulls. 
+          categories = set(dfresult['Category'])
           # create folder for saving output
           if os.path.exists(output_folder):
                shutil.rmtree(output_folder)
@@ -149,12 +150,9 @@ class PriceMonitoringTool(object):
                os.makedirs(output_folder)
           # save each category into a sperated csv file
           for cat in categories:
-               if cat == math.nan:
-                    return 0
-               else:
-                    cat_df = final_df[final_df['Category']==cat] 
+                    cat_df = dfresult[dfresult['Category']==cat] 
                     cat_df.to_csv(f"{output_folder}/{cat}.csv")  
-          return final_df   
+          return dfresult   
 
      def downloadImg(self,data_df):
           """
