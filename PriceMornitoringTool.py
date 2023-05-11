@@ -1,5 +1,4 @@
 import sys, os, shutil
-import math
 import string
 import argparse
 import requests
@@ -18,15 +17,21 @@ class PriceMonitoringTool(object):
           self.connCheck(response)
           if book_name != None and category==None:
                product_url = self.findProdPage(book_name=book_name)
+               print("Successfully retrieved book page.")
                book_info = self.getInfo(product_url)
                data_df = self.expCSV(product_url, book_info)
+               print(f"{book_name} product info has been exported to csv file.")
                self.downloadImg(data_df)
+               print("The script is completed.")
           else:
-               product_url = self.findProdPage(book_name=book_name)
+               #product_url = self.findProdPage(book_name=book_name)
                cat_url = self.getCategoryURL(category)
                book_info = self.getInfo(cat_url)
-               data_df = self.expCSV(product_url, book_info)
+               print("Successfully retrieved book page.")
+               data_df = self.expCSV(cat_url, book_info)
+               print("All book info has been exported to csv file.")
                self.downloadImg(data_df)
+               print("The script is completed.")
                
      def connCheck(self,response):
             """
@@ -58,6 +63,7 @@ class PriceMonitoringTool(object):
         # get the URL of the product page 
         if book_name == None:
                product_urls = soup.find_all('a',href = True,title=True)
+               
                # find href attributes of each book product
                for target_link in product_urls:
                     url = target_link["href"]
@@ -65,21 +71,28 @@ class PriceMonitoringTool(object):
                          url = url.replace("../", "")
                     while "./" in url:
                          url = url.replace("./", "")
-                    if not "catalogue" in url:
-                         product_url.append("catalogue/" + url)    
+                    if "catalogue" not in url:
+                         product_url.append("catalogue/" + url)   
                     else:
                          product_url.append(url)
         elif soup.find("a", {"title":string.capwords(book_name)}):
                target_link = soup.find("a", {"title":string.capwords(book_name)})
-               if not "catalogue" in target_link["href"]:
+               if "catalogue" not in target_link["href"]:
                     product_url.append("catalogue/" + target_link["href"])
                else:
                     product_url.append(target_link["href"])
                return product_url
           # find href on all pages
         if hasMore:
-               nextUrl = hasMore.a.get('href')
-               product_url.extend(self.findProdPage(nextUrl,book_name))
+               if category == None:
+                    nextUrl = hasMore.a.get('href')
+                    if "catalogue" not in nextUrl: 
+                         nextUrl = "catalogue/" + nextUrl
+                    product_url.extend(self.findProdPage(nextUrl,book_name))
+               else:
+                    #nextUrl = hasMore.a.get('href')
+                    nextUrl = "/".join(link.split("/")[0:-1]) + "/" + hasMore.a.get('href')
+                    product_url.extend(self.findProdPage(nextUrl,book_name))
         elif book_name != None:
              print(f"Warning: book {book_name} not found!")
         return product_url
@@ -102,10 +115,11 @@ class PriceMonitoringTool(object):
                      itemText = item.get_text().strip()
                      if itemText == category:
                          cat_url = item.a.get('href')
-                         if cat_url != "":
-                              cat_url_list.append(cat_url)                
-                     for curl in cat_url_list:                    
-                         results = self.findProdPage(curl)
+                         cat_url_list.append(cat_url)
+                    #  else:
+                    #       print(f"Warning: {category} not found.")                
+               for curl in cat_url_list:                  
+                    results = self.findProdPage(curl)
                return results
 
      def getInfo(self,product_url): 
@@ -114,7 +128,11 @@ class PriceMonitoringTool(object):
            upc,book_title ,price_including_tax,price_excluding_tax,quantity_available,product_description,category,review_rating,image_url
         """
         productsInfo = []
+        count = 0
         for product in product_url:
+                count = count + 1
+                if count % 100 == 0:
+                    print(f"Getting product info on {product} ({count} of {len(product_url)}) ...")
                 # create a BeautifulSoup object to parse the HTML content of the product page
                 product_soup = self.getSoup(product)
                 # scrape the desired information from the product page
@@ -124,7 +142,8 @@ class PriceMonitoringTool(object):
                 price_including_tax = product_soup.select_one('.table-striped > tr:nth-of-type(4) > td').get_text()
                 price_excluding_tax = product_soup.select_one('.table-striped > tr:nth-of-type(3) > td').get_text()
                 quantity_available = product_soup.select_one('.table-striped > tr:nth-of-type(6) > td').get_text()
-                product_description = product_soup.select_one('.product_page > p').get_text()
+                product_description = product_soup.select_one('.product_page > p').get_text() if product_soup.select_one('.product_page > p') else 'Unavailable'  
+                #product_description = 'Testing'
                 review_rating = product_soup.select_one('.star-rating')['class'][1]
                 image_url = 'http://books.toscrape.com' + product_soup.find('img')['src'][5:]
                 productsInfo.append((category, upc, book_title, price_excluding_tax, price_including_tax, quantity_available, product_description, review_rating, image_url))
@@ -137,11 +156,11 @@ class PriceMonitoringTool(object):
           output_folder = self.output_folder
           prod_url = [self.weblink + purl for purl in product_url]
           df1 = pd.DataFrame({'product_page_url': prod_url})
-          df2 = pd.DataFrame(book_info,columns=['Category', 'UPC', 'Book_Title', 'Price_Including_Tax', 'Price_Excluding_Tax', 'Quantity_Available',
-                              'Product_Description','Review_Rating','Image_url'])
+          df2 = pd.DataFrame(book_info,columns=['Category', 'UPC', 'Book_Title', 'Price_Including_Tax', 'Price_Excluding_Tax', 'Quantity_Available', 'Product_Description',
+                              'Review_Rating','Image_url'])
           final_df = pd.concat([df1, df2], axis=1)
-          dfresult = final_df.dropna()  # drop rows which category are nulls. 
-          categories = set(dfresult['Category'])
+          result_df = final_df.dropna()  # drop rows which category are nulls. 
+          categories = set(result_df['Category'])
           # create folder for saving output
           if os.path.exists(output_folder):
                shutil.rmtree(output_folder)
@@ -150,9 +169,9 @@ class PriceMonitoringTool(object):
                os.makedirs(output_folder)
           # save each category into a sperated csv file
           for cat in categories:
-                    cat_df = dfresult[dfresult['Category']==cat] 
+                    cat_df = result_df[result_df['Category']==cat] 
                     cat_df.to_csv(f"{output_folder}/{cat}.csv")  
-          return dfresult   
+          return result_df   
 
      def downloadImg(self,data_df):
           """
