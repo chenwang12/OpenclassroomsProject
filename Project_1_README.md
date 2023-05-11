@@ -26,9 +26,9 @@ or you can extract all books information for a given category by pass optional a
 or without passing any optional argument, the script will extract all books' information on this website. \
 Example: 
 * To extract information of book "Soumission": \
-``` python PriceMornitoringTool.py --b soumission ```
+``` python PriceMornitoringTool.py -b soumission ```
 * To extract all books information of category "Fantasy" \
-``` python PriceMornitoringTool.py --c Fantasy ```
+``` python PriceMornitoringTool.py -c Fantasy ```
 * To extract all books information on this website \
 ``` python PriceMornitoringTool.py ```
 
