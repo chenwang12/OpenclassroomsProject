@@ -9,12 +9,13 @@ import pandas as pd
 class PriceMonitoringTool(object):
      def __init__(self):
           self.weblink = 'http://books.toscrape.com/'
-          self.img_folder = os.path.join(os.path.join(os.environ['USERPROFILE'], 'Desktop'),'web_book_img')
-          self.output_folder = os.path.join(os.path.join(os.environ['USERPROFILE'], 'Desktop'),'web_book_scrapping')
+          self.img_folder = os.path.join(os.getcwd(),r'web_book_img')
+          self.output_folder = os.path.join(os.getcwd(),r'web_book_scrapping')
 
      def run(self, book_name=None, category=None):
           response = requests.get(self.weblink)
           self.connCheck(response)
+          print(f"Conected to {self.weblink}.")
           if book_name != None and category==None:
                product_url = self.findProdPage(book_name=book_name)
                print("Successfully retrieved book page.")
@@ -151,7 +152,8 @@ class PriceMonitoringTool(object):
 
      def expCSV(self,product_url,book_info):
           """
-          Export books' information of each category into a seperated csv file
+          Function that export books' information of each category into a seperated csv file
+          return: pandas data frame
           """
           output_folder = self.output_folder
           prod_url = [self.weblink + purl for purl in product_url]
@@ -159,7 +161,7 @@ class PriceMonitoringTool(object):
           df2 = pd.DataFrame(book_info,columns=['Category', 'UPC', 'Book_Title', 'Price_Including_Tax', 'Price_Excluding_Tax', 'Quantity_Available', 'Product_Description',
                               'Review_Rating','Image_url'])
           final_df = pd.concat([df1, df2], axis=1)
-          result_df = final_df.dropna()  # drop rows which category are nulls. 
+          result_df = final_df.dropna()  # drop null rows 
           categories = set(result_df['Category'])
           # create folder for saving output
           if os.path.exists(output_folder):
