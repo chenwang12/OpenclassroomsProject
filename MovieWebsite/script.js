@@ -5,6 +5,8 @@ async function loaded() {
     getMoviesForCategory('action');
     getMoviesForCategory('comedy');
     getMoviesForCategory('horror');
+    //Commented only displayed below for testing best movie logic
+    //getMoviesForCategory('drama');
 }
 
 async function setBestMovie(movie) {
