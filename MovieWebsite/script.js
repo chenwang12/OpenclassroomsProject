@@ -84,7 +84,7 @@ async function getMoviesForCategory(name) {
         if (!movies[i].image_url) {
             movies[i].image_url = defaultImage;
         }
-        moviesContainer.innerHTML = moviesContainer.innerHTML + `<img src="${movies[i].image_url}" onerror="this.onerror=null; this.src='${defaultImage}'; this.style.background='white'; this.alt='Movie Image Not Available'" onclick="openModal(${movies[i].id}, '${movies[i].imdb_url}')" alt="" class="row__poster row__posterLarge"></img>`
+        moviesContainer.innerHTML = moviesContainer.innerHTML + `<img src="${movies[i].image_url}" onerror="this.onerror=null; this.src='${defaultImage}'; this.style.background='white'; this.alt='Movie Image Not Available'; this.title='Movie Image Not Available';" onclick="openModal(${movies[i].id}, '${movies[i].imdb_url}')" alt="" class="row__poster row__posterLarge"></img>`
     }
 }
 
@@ -97,7 +97,7 @@ async function retrieveModalContent(movieId, imdbUrl) {
     }
     modalContent.style.backgroundImage = movieData.image_url;
     modalContent.innerHTML = `
-        <img src="${movieData.image_url}" onerror="this.onerror=null; this.src='${defaultImage}'; this.alt='Movie Image Not Available'" />    
+        <img src="${movieData.image_url}" onerror="this.onerror=null; this.src='${defaultImage}'; this.alt='Movie Image Not Available'; this.title='Movie Image Not Available';" />    
         <h2>${movieData.title}</h2>
         <p><b>Genres:</b>${movieData.genres.join(', ')}</p> <p><b>Country of origin:</b> ${movieData.countries.join(', ')}</p>
         <p><b>Release date:</b> ${movieData.date_published}</p>
