@@ -177,7 +177,7 @@ class PriceMonitoringTool(object):
 
      def downloadImg(self,data_df):
           """
-          Function that download book cover images and save to the folder. Default folder is Desktop/web_book_img
+          Function that download book cover images and save to the folder. Default folder is in the script folder "web_book_img"
           """
           # make a folder for saving images
           img_folder = self.img_folder

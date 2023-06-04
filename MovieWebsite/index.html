@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content=""width=device-width, initial-scale="1.0">
+        <title>JustStreamIt HomePage</title>
+        <link rel="stylesheet" href="styles.css" />
+        <script src="script.js"></script>
+        
+    </head>
+    <body onload="loaded()">
+        <!-- Navigation Bar -->
+        <div class="nav" id="nav">
+            <img src="https://user.oc-static.com/upload/2020/09/18/16004298835178_P5.png" alt="" class="nav__logo">
+            <div class="nav__buttons">
+                <button class="banner__button">Home</button>
+                <button class="banner__button">Categories</button>
+            </div>
+        </div>
+        <!-- JustStreamIt Banner -->
+        <div class="banner">
+            <div class="banner__contents">
+                <h1 class="banner__title">Suvarna Sundari</h1>
+                <div class="banner__buttons">
+                    <button class="banner__button">Play</button>
+                </div>
+                <div class="banner__description">
+                    The movie revolves around an idol, Suvarna Sundari and the effects of it. The idol, also known as Trinetri, 
+                    dates back to 15th century. Whoever possesses the idol, becomes a victim of ...
+                </div>
+                
+           </div>
+            
+           <div class="banner--fadebottom"></div>
+        </div>   
+
+        <!-- The Modal -->
+        <div id="modal" class="modal">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <div id="modalContent" class="modal-content"></div>
+        </div>
+       
+        <!-- Best Movie -->
+        <div class="row">
+            <div class="movie-card">
+                <h2>Top Rated Movies</h2>
+                <div id="topMovies" class="row__posters"></div>
+            </div>
+        </div>
+
+         <!-- Action Movie -->
+         <div class="row">
+            <div class="movie-card">
+                <h2>Top Action Movies</h2>
+                <div id="actionMovies" class="row__posters"></div>
+            </div>
+        </div>
+
+         <!-- Comedy Movie -->
+         <div class="row">
+            <div class="movie-card">
+                <h2>Top Comedy Movies</h2>
+                <div id="comedyMovies" class="row__posters"></div>
+            </div>
+        </div>
+
+         <!-- Horror Movie -->
+         <div class="row">
+            <div class="movie-card">
+                <h2>Top Horror Movies</h2>
+                <div id="horrorMovies" class="row__posters"></div>
+            </div>
+        </div>
+
+        <script>
+            const nav = document.getElementById('nav');
+            window.addEventListener('scroll', () => {
+                if(window.scrollY >=100) {
+                    nav.classList.add('nav__black');
+                } else {
+                    nav.classList.remove('nav__black')
+                }
+            });
+        </script>
+    </body>
+</html>
