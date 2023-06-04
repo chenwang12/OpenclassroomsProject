@@ -1,8 +1,36 @@
+const defaultImage = 'https://user.oc-static.com/upload/2020/09/18/16004298835178_P5.png';
+
 async function loaded() {
     getMoviesForCategory();
     getMoviesForCategory('action');
     getMoviesForCategory('comedy');
     getMoviesForCategory('horror');
+}
+
+async function setBestMovie(movie) {
+    const bestMovieContainer = document.getElementById('banner__contents');
+    document.getElementById('banner').style.backgroundImage = `url(${movie.image_url})`;
+    console.log('Setting best movie ...');
+    console.log(document.getElementById('banner').style.backgroundImage);
+    const movieData = await getMovieAttributes(movie.id);
+    bestMovieContainer.innerHTML = `
+        <h1 class="banner__title">${movie.title}</h1>
+        <div class="banner__buttons">
+            <button class="banner__button">Play</button>
+        </div>
+        <div class="banner__description">
+            ${movieData.description}
+        </div>
+    `;
+}
+
+async function getMovieAttributes(movieId) {
+    const response = await fetch(`http://localhost:8000/api/v1/titles/${movieId}`);
+    if (!response.ok) {
+        throw new Error('Unable to retrieve movie details.');
+    }
+    const movieData = await response.json();
+    return movieData;
 }
 
 async function getTopMovies(category) {
@@ -44,28 +72,32 @@ async function getMoviesForCategory(name) {
     }
     console.log(movies)
     moviesContainer.innerHTML = '';
-    for(let i = 1; i <= 7; ++i) {
+    let lower = 0;
+    let upper = 6;
+    console.log(name);
+    if (name === undefined) {
+        lower = 1;
+        upper = 7;
+        setBestMovie(movies[0]);
+    }
+    for(let i = lower; i <= upper; ++i) {
         if (!movies[i].image_url) {
-            movies[i].image_url = 'https://user.oc-static.com/upload/2020/09/18/16004298835178_P5.png';
+            movies[i].image_url = defaultImage;
         }
-        moviesContainer.innerHTML = moviesContainer.innerHTML + `<img src="${movies[i].image_url}" onclick="openModal(${movies[i].id}, '${movies[i].imdb_url}')" alt="" class="row__poster row__posterLarge"></img>`
+        moviesContainer.innerHTML = moviesContainer.innerHTML + `<img src="${movies[i].image_url}" onerror="this.onerror=null; this.src='${defaultImage}'; this.style.background='white'; this.alt='Movie Image Not Available'" onclick="openModal(${movies[i].id}, '${movies[i].imdb_url}')" alt="" class="row__poster row__posterLarge"></img>`
     }
 }
 
 async function retrieveModalContent(movieId, imdbUrl) {
     const modalContent = document.getElementById('modalContent')
-    const response = await fetch(`http://localhost:8000/api/v1/titles/${movieId}`);
-    if (!response.ok) {
-        throw new Error('Unable to retrieve movie details.');
-    }
-    const movieData = await response.json();
+    const movieData = await getMovieAttributes(movieId);
     // TODO: create generic image to be assigned to movieData.image_url
     if (!movieData.image_url) {
         movieData.image_url = 'https://user.oc-static.com/upload/2020/09/18/16004298835178_P5.png';
     }
     modalContent.style.backgroundImage = movieData.image_url;
     modalContent.innerHTML = `
-        <img src="${movieData.image_url}" />    
+        <img src="${movieData.image_url}" onerror="this.onerror=null; this.src='${defaultImage}'; this.alt='Movie Image Not Available'" />    
         <h2>${movieData.title}</h2>
         <p><b>Genres:</b>${movieData.genres.join(', ')}</p> <p><b>Country of origin:</b> ${movieData.countries.join(', ')}</p>
         <p><b>Release date:</b> ${movieData.date_published}</p>
