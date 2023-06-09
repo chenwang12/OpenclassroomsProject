@@ -1,4 +1,5 @@
 const defaultImage = 'https://user.oc-static.com/upload/2020/09/18/16004298835178_P5.png';
+         
 
 async function loaded() {
     getMoviesForCategory();
@@ -126,3 +127,4 @@ function openModal(movieId, imdbUrl) {
 function closeModal() {
     document.getElementById('modal').style.display = 'none';
 }
+
