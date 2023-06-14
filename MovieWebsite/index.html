@@ -5,7 +5,7 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="">
         <title>JustStreamIt HomePage</title>
-        <link rel="stylesheet" href="styles.css">
+        <link rel="stylesheet" href="./styles.css">
         <script src="script.js"></script>
         
     </head>
@@ -21,7 +21,7 @@
         <!-- JustStreamIt Banner -->
         <div id="banner" class="banner">
             <div id="banner__contents" class="banner__contents"></div>
-           <div class="banner--fadebottom"></div>
+            <div class="banner--fadebottom"></div>
         </div>   
 
         <!-- The Modal -->
@@ -34,8 +34,8 @@
         <div class="row">
             <div class="movie-card">
                 <h2>Top Rated Movies</h2>
-                <div id="topMovies" class="row__posters"></div>
-            </div>
+                <div id="topMovies" class="row__posters" onmouseover="this.focus();"></div>
+            </div>             
         </div>
 
          <!-- Action Movie -->
@@ -81,5 +81,8 @@
                 }
             });
         </script>
+
+        
+        
     </body>
 </html>

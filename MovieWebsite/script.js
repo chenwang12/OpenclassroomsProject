@@ -1,5 +1,26 @@
 const defaultImage = 'https://user.oc-static.com/upload/2020/09/18/16004298835178_P5.png';
-         
+
+const showImages = 5;
+const maxImages = 7;
+
+const movieTracker = {
+    "top": {
+        "start": 1,
+        "end": showImages
+    },
+    "action": {
+        "start": 0,
+        "end": showImages - 1
+    },
+    "comedy": {
+        "start": 0,
+        "end": showImages - 1
+    },
+    "horror": {
+        "start": 0,
+        "end": showImages - 1
+    }
+};
 
 async function loaded() {
     getMoviesForCategory();
@@ -52,7 +73,7 @@ async function getTopMovies(category) {
         }
         const data = await response.json(); // Parse the response body as JSON
         movies.push.apply(movies, data.results);
-        if(!data.next || movies.length >= 7) {
+        if(!data.next || movies.length >= 10) {
             hasNext = false;
         }
         url = data.next;
@@ -64,9 +85,10 @@ async function getMoviesForCategory(name) {
     let moviesContainer = null;
     //get movies sorted by score
     let movies = null;
-    
+    const id = `${name}Movies`;
+
     if (name) {
-        moviesContainer = document.getElementById(`${name}Movies`);
+        moviesContainer = document.getElementById(id);
         movies = await getTopMovies(name); 
     }
     else {
@@ -74,21 +96,27 @@ async function getMoviesForCategory(name) {
         movies = await getTopMovies();
     }
     console.log(movies)
-    moviesContainer.innerHTML = '';
-    let lower = 0;
-    let upper = 6;
-    console.log(name);
+    moviesContainer.innerHTML = `<a class="switchLeft sliderButton" onclick="sliderScrollLeft('${name}')"><</a>`;
     if (name === undefined) {
-        lower = 1;
-        upper = 7;
-        setBestMovie(movies[0]);
+        name = 'top';
     }
-    for(let i = lower; i <= upper; ++i) {
+    let lower = movieTracker[name]["start"] || 0;
+    let upper = movieTracker[name]["end"] || showImages;
+    console.log(name);
+    if (name === 'top') {
+        lower = lower + 1;
+        upper = upper + 1;
+        setBestMovie(movies[0]);
+        name = undefined;
+    }
+
+    for(let i = lower; i < upper; ++i) {
         if (!movies[i].image_url) {
             movies[i].image_url = defaultImage;
         }
-        moviesContainer.innerHTML = moviesContainer.innerHTML + `<img src="${movies[i].image_url}" onerror="this.onerror=null; this.src='${defaultImage}'; this.style.background='white'; this.alt='Movie Image Not Available'; this.title='Movie Image Not Available';" onclick="openModal(${movies[i].id}, '${movies[i].imdb_url}')" alt="" class="row__poster row__posterLarge"></img>`
+        moviesContainer.innerHTML = moviesContainer.innerHTML + `<img src="${movies[i].image_url}" onerror="this.onerror=null; this.src='${defaultImage}'; this.style.background='white'; this.alt='Movie Image Not Available'; this.title='Movie Image Not Available';" onclick="openModal(${movies[i].id}, '${movies[i].imdb_url}')" onmouseover="this.focus()" alt="" class="row__poster row__posterLarge"></img>`
     }
+    moviesContainer.innerHTML = moviesContainer.innerHTML + `<a class="switchRight sliderButton" onclick="sliderScrollRight('${name}')">></a>`;
 }
 
 async function retrieveModalContent(movieId, imdbUrl) {
@@ -128,3 +156,60 @@ function closeModal() {
     document.getElementById('modal').style.display = 'none';
 }
 
+// scroll arrow
+function sliderScrollLeft(category) {
+    /*const sliders = document.getElementById(movieId);
+    var ImagePadding = 20
+    var scrollAmount = 0;
+    var scrollPerClick = document.getElementsByClassName("row__poster").clientWidth + ImagePadding;
+
+    sliders.scrollTo({
+        top: 0,
+        left: (scrollAmount -= scrollPerClick),
+        behavior: "smooth"
+    });
+    if(scrollAmount < 0) {
+        scrollAmount = 0
+    }*/
+    let startLimit = 0;
+    if (category === undefined || category === 'undefined') {
+        category = 'top';
+        startLimit = 1;
+    }
+    if (movieTracker[category]["start"] > startLimit) {
+        movieTracker[category]["start"] = movieTracker[category]["start"] - 1;
+        movieTracker[category]["end"] = movieTracker[category]["start"] + showImages - 1;
+    }
+    if (category === 'top') {
+        category = undefined;
+    }
+    getMoviesForCategory(category);
+}
+
+function sliderScrollRight(category) {
+    /*const sliders = document.getElementById(movieId);
+    var ImagePadding = 20
+    var scrollAmount = 0;
+    var scrollPerClick = document.getElementsByClassName("row__poster").clientWidth + ImagePadding;
+
+    if(scrollAmount <= sliders.scrollWidth - sliders.clientWidth) {
+        sliders.scrollTo({
+            top: 0,
+            left: (scrollAmount += scrollPerClick),
+            behavior: "smooth",
+        })
+    }*/
+    let topLimit = 7;
+    if (category === undefined || category === 'undefined') {
+        category = 'top';
+        topLimit = 8;
+    }
+    if (movieTracker[category]["end"] < topLimit) {
+        movieTracker[category]["end"] = movieTracker[category]["end"] + 1;
+        movieTracker[category]["start"] = movieTracker[category]["end"] - showImages + 1;
+    }
+    if (category === 'top') {
+        category = undefined;
+    }
+    getMoviesForCategory(category);
+}
