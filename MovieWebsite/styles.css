@@ -28,14 +28,14 @@ body {
 
 .switchLeft,
 .switchRight {
-  color: red;
+  color: white;
   font-weight: bold;
   max-height: 250px;
-  width: 80px;
+  width: 50px;
   line-height: 250px;
   font-size: 50px;
   text-align: center;
-  background-color: whitesmoke;
+  background-color: #111;
   font-family: sans-serif;
   z-index: 3;
 }
@@ -146,7 +146,6 @@ header {
 .nav__black {
     background-color:#000;
 }
-
 
 /* The modal background */
 .modal {
