@@ -1,10 +1,12 @@
 from django.urls import path
-from . import views
+from tracking.views import users
+
+#app_label = "tracking"
 
 urlpatterns = [
     # path("", views.index, name="index"),
-    # path('signup/', views.singnup),
-    # path('login/', views.login),
+    path('signup/', users.signup),
+    path('login/', users.login),
     # path('projects/', views.projects),
     # path('projects/<int:id>/', views.prj_detail),
     # path('projects/<int:id>/users/', views.prj_users),
