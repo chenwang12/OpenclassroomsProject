@@ -23,6 +23,10 @@ def signup(request):
     
     body = None
     try:
+        #if POST in request:
+        # body = request.POST
+        # else:
+        # request.body = json.dumps(request.POST)
         body = json.loads(request.body)
     except:
         error = { "message": f"error parsing JSON {request.body}" }
