@@ -1,8 +1,10 @@
 from django.db import models
+from django.contrib.auth.models import AbstractBaseUser
+import json
 
 # Create your models here.
 
-class Users(models.Model):
+class Users(AbstractBaseUser):
     class Meta:
         app_label = 'tracking'
         db_table = 'users'
@@ -36,13 +38,18 @@ class Users(models.Model):
         return str(vars(self))
 
 
-# class Projects(models.Model):
-#     type_choices = [("back end","Back End"), ("front end","Font End"), ("iOS","IOS"),("Android","Android")]
-#     project_id = models.IntegerField(primary_key=True)
-#     title = models.CharField(max_length=100)
-#     description = models.CharField(max_length=255)
-#     type = models.CharField(max_length=10,choices=type_choices)
-#     author_user_id = models.ForeignKey(Users, on_delete=models.CASCADE)
+class Projects(models.Model):
+    class Meta:
+        app_label = "tracking"
+        db_table = 'projects'
+
+    REQUIRED_FIELDS = ('title','type')
+    type_choices = [("back end","Back End"), ("front end","Font End"), ("iOS","IOS"),("Android","Android")]
+    project_id = models.IntegerField(auto_created=True,primary_key=True)
+    title = models.CharField(max_length=100)
+    description = models.CharField(max_length=255)
+    type = models.CharField(max_length=10,choices=type_choices)
+    author_user_id = models.ForeignKey(Users, on_delete=models.CASCADE)
 
 
 # class Contributors(models.Model):

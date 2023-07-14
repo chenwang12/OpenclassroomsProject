@@ -47,7 +47,7 @@ def signup(request):
     data = { 
         "message": f"user {body['email']} created successfully"
      }
-    return JsonResponse(data, safe=False, status=200)    
+    return JsonResponse(data, safe=False, status=201)    
 
 def login(request):
     if request.method != 'POST':

@@ -1,5 +1,5 @@
 from django.urls import path
-from tracking.views import users
+from tracking.views import users,projects
 
 #app_label = "tracking"
 
@@ -7,7 +7,7 @@ urlpatterns = [
     # path("", views.index, name="index"),
     path('signup/', users.signup),
     path('login/', users.login),
-    # path('projects/', views.projects),
+    path('projects/', projects.handleProject),
     # path('projects/<int:id>/', views.prj_detail),
     # path('projects/<int:id>/users/', views.prj_users),
     # path('projects/<int:id>/users/<int:id>', views.prj_user_info),
